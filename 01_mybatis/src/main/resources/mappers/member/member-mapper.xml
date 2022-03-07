@@ -1,0 +1,156 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<!-- namespace 속성 : 외부에서 이 mapper에 접근할 수 있는 별칭 -->
+
+<mapper namespace="memberMapper">
+
+	<!--  중복되는 쿼리내용을 재사용하기 위한 SQL 조각 
+			사용하려는 태그보다 항상 위에 있어야함-->
+	<sql id="selectMemberSql">
+		SELECT USER_NO,
+		        USER_ID,
+		        USER_PWD,
+		        USER_NAME,
+		        USER_ROLE,
+		        STATUS,
+		        ENROLL_DATE,
+		        MODIFY_DATE
+		FROM MEMBER
+		WHERE STATUS='Y'
+	</sql>
+
+	<!-- 
+		resultMap은 DB와 자바클래스를 매핑 해줄 때 사용된다. (JDBC 코드를 대부분 줄여주는 역활을 한다.)
+		
+		type : ResultSet을 담을 자바 클래스명으로 어떤 타입(클래스)를 참조할 것인지 기술한다.(alias 사용)
+		id : resultMap의 고유 아이디로 select 문에서 resultMap 속성에 사용하게 된다.
+	-->
+	<resultMap type="Member" id="memberResultMap">
+		<!-- property : 자바의 인스턴스 변수 이름, column : DB에서 select 컬럼명 -->
+		<!-- DB에서 기본키를 의미 -->
+		<id property="userNo" column="USER_NO"/>
+		<!-- DB에서 일반 컬럼들 -->
+		<result property="userId" column="USER_ID"/>
+		<result property="userPwd" column="USER_PWD"/>
+		<result property="userName" column="USER_NAME"/>
+		<result property="userRole" column="USER_ROLE"/>
+		<result property="status" column="STATUS"/>
+		<result property="enrollDate" column="ENROLL_DATE"/>
+		<result property="modifyDate" column="MODIFY_DATE"/>	
+	</resultMap>
+
+	<!-- 
+		select 구문 
+			id :외부에서 참조하기 위한 쿼리문의 고유 아이디
+			resultType : 쿼리문 실행후 조회되는 결과값의 자료형
+	 -->
+	<select id="selectCount" resultType="_int">
+		SELECT COUNT(*) FROM MEMBER
+	</select>
+	
+	<select id="selectMemberAll" resultMap="memberResultMap">
+		<include refid="selectMemberSql"></include>
+	</select>
+	
+	
+	<!-- 
+		<select id="selectMember" resultType="com.kh.mybatis.member.model.vo.Member">
+	   		==> typeAilas 설정 후 resultType 다음과 같이 수정 resultType="Member"
+	  		 * 쿼리문은 SQL developer에서 작성 후 가져오는 것이 좋다. 
+
+		외부에서 매개변수로 받는 값이 있으면 해당하는 매개변수의 타입을 지정해줘야 한다. (parameterType="string")
+		외부에서 매개변수로 받은 값은 #{변수명}로 설정해서 값을 가져온다.  ( ${ } 이런 건 안 씀.)
+			 객체를 파라미터로 받는 경우 해당 객체의 필드 값을 ‘변수명 = 값‘의 Map 방식으로 조회하여 가져올 수 있다.
+			 
+		<select id="selectMember" parameterType="string" resultType="Member">
+		
+			SELECT USER_NO,
+			        USER_ID,
+			        USER_PWD,
+			        USER_NAME,
+			        USER_ROLE,
+			        STATUS,
+			        ENROLL_DATE,
+			        MODIFY_DATE
+			FROM MEMBER
+			WHERE USER_ID = #{id}
+			AND STATUS='Y'		
+		
+		이렇게 하면 STATUS만 값이 넘어오고 나머지는 값이 넘어오지 않아 에러난다.
+		해당 쿼리문 수행 결과가 담긴 ResultSet은 resultType의 객체에 자동으로 mapping되어 리턴된다. 
+		단, 조회 결과의 컬럼명과 자바에서의 클래스 변수명이 동일해야 자동으로 mapping 된다. (대소문자 구분 안 함)
+		
+		1) 쿼리문에서 "AS 별칭"으로 조회되는 컬럼명을 변경한다. : USER_NO AS userNo, (유지보수 문제로 비추천!)
+		
+			SELECT USER_NO AS userNo,
+			        USER_ID AS userId,
+			        USER_PWD AS userPwd,
+			        USER_NAME AS userName,
+			        USER_ROLE AS userRoll,
+			        STATUS,
+			        ENROLL_DATE AS enrollDate,
+			        MODIFY_DATE AS modifyDate
+			FROM MEMBER
+			WHERE USER_ID = #{id}		
+		
+		2) resultMap을 이용해서 명시적으로 컬럼명과 변수명을 mapping 시켜준다. (추천!) 
+		    resultMap을 사용하면 따로 매핑 할 필요없이 기존 쿼리문을 그대로 사용 
+		    
+		3)  SQL 조각 작성하고 include 	
+	-->
+	
+	<select id="selectMember" parameterType="string" resultMap="memberResultMap">
+		<include refid="selectMemberSql"></include>
+		
+		AND USER_ID = #{id}
+		
+	</select>
+	
+	<!-- insert, update, delete -->
+	<insert id="insertMember" parameterType="Member"
+		useGeneratedKeys="true" keyProperty="userNo" keyColumn="USER_NO">
+		 INSERT INTO MEMBER (
+	         USER_NO,
+	         USER_GUID,
+	         USER_ID,
+	         USER_PWD,
+	         USER_ROLE,
+	         USER_NAME,
+	         STATUS,
+	         ENROLL_Date,
+	         MODIFY_Date      
+	      )
+	      VALUES(
+	         SEQ_UNO.NEXTVAL, 
+	         SYS_GUID(), 
+	         #{userId}, 
+	         #{userPwd}, 
+	         DEFAULT, 
+	         #{userName}, 
+	         DEFAULT,  
+	         SYSDATE, 
+	         SYSDATE
+	      )
+	</insert>
+	
+	<!-- 파라미터로 객체를 받는 경우 해당 객체의 필드 값을 ‘변수명 = 값‘의 Map 방식으로 조회하여 가져올 수 있다.
+	          #{userId}, 이렇게 값을 전달하는 이유  -->
+
+
+	<update id="updateMember" parameterType="Member">
+		UPDATE MEMBER
+		SET 
+   			USER_PWD=#{userPwd},
+    		USER_NAME=#{userName},
+    		MODIFY_DATE=SYSDATE
+		WHERE 
+    		USER_NO = #{userNo}
+	</update>
+	
+	<delete id="deleteMember" parameterType="_int">
+		DELETE FROM MEMBER WHERE USER_NO = #{userNo} 
+	</delete>
+
+</mapper>

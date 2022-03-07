@@ -1,0 +1,233 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+
+<mapper namespace="boardMapper">
+	<sql id="boardListSql">
+		SELECT B.BOARD_NO,
+		       M.USER_ID,
+		       B.BOARD_TITLE,
+		       B.BOARD_CONTENT,
+		       B.BOARD_READCOUNT,
+		       B.BOARD_CREATE_DATE,
+		       B.STATUS
+		FROM BOARD B
+		JOIN MEMBER M ON(B.BOARD_WRITER_NO = M.USER_NO)		
+		WHERE B.STATUS='Y'	
+	</sql>
+
+	<resultMap type="Board" id="boardResultMap">
+		<id property="boardNo" column="BOARD_NO"/>
+		<result property="userId" column="USER_ID"/>
+		<result property="boardTitle" column="BOARD_TITLE"/>
+		<result property="boardContent" column="BOARD_CONTENT"/>
+		<result property="boardReadCount" column="BOARD_READCOUNT"/>
+		<result property="status" column="STATUS"/>
+		<result property="boardCreateDate" column="BOARD_CREATE_DATE"/>	
+	</resultMap>
+	
+	<resultMap type="Board" id="boardDetailResultMap">
+		<id property="boardNo" column="BOARD_NO"/>
+		<result property="userId" column="B_USER_ID"/>
+		<result property="boardTitle" column="BOARD_TITLE"/>
+		<result property="boardContent" column="BOARD_CONTENT"/>
+		<result property="boardReadCount" column="BOARD_READCOUNT"/>
+		<result property="status" column="B_STATUS"/>
+		<result property="boardCreateDate" column="BOARD_CREATE_DATE"/>	
+		<!-- 
+			아래와 같이 id, result가 아닌 colletion을 가지고 작업하게 되면 Board 클래스의 멤버 변수인 replies에 매핑할 수 있다
+			javaType : 어떤 자바 컬렉션 타입인지  명시
+			select : 컬렉션을 조회하고자 하는 쿼리문의 id를 적어준다.
+			column : 컬렉션을 조회하고자 하는 쿼리문에 파라미터를 전달해 줄 때 사용   여러개라면 column="{BOARD_NO, BOARD_TITLE}"
+			 * 1: 1 관계인 객체를 조회해 오고 싶다면 assoiciation을 사용해서 매핑해주면 된다. 사용방법은 collection과 동일
+			 1. 쿼리문을 각각 만들어서 하나의 ResultMap에서 매핑하는 방법
+		<collection property="replies" javaType="java.util.ArrayList" select="selectBoardReply" column="BOARD_NO"/>
+			2. 하나의 쿼리문을 만들어서 ResultMap에서 매핑하는 방법
+	 	 -->	
+		<collection property="replies" javaType="java.util.ArrayList" resultMap="boardReplyResultMap"/>	 	 
+	</resultMap>
+	
+	<resultMap type="Reply" id="boardReplyResultMap">
+		<id property="replyNO" column="REPLY_NO"/>
+		<result property="boardNO" column="BOARD_NO"/>
+		<result property="userId" column="R_USER_ID"/>
+		<result property="replyContent" column="REPLY_CONTENT"/>
+		<result property="status" column="R_STATUS"/>
+		<result property="replyCreateDate" column="REPLY_CREATE_DATE"/>
+		<result property="replyModifyDate" column="REPLY_MODIFY_DATE"/>
+	</resultMap>
+	
+	
+	
+	<select id="selectBoardList" parameterType="map" resultMap="boardResultMap">
+		<include refid="boardListSql"></include>
+		<choose>
+			<when test="writer != null">
+				AND M.USER_ID LIKE '%' || #{writer} || '%'
+			</when>
+			<when test="title != null">
+				AND	B.BOARD_TITLE LIKE '%' || #{title} || '%'
+			</when>
+			<when test="content != null">
+				AND	B.BOARD_CONTENT LIKE '%' || #{content} || '%'
+			</when>
+			<otherwise>
+				<!-- 위의 조건 중 하나도 만족하지 않는 경우 포함될 쿼리 작성 -->
+			</otherwise>
+		</choose>	
+	
+		<!-- 
+		<include refid="boardListSql"></include>
+		
+		<where> 
+		<trim prefix="WHERE" prefixOverrides="AND|OR">
+			<if test="writer != null">
+				M.USER_ID LIKE '%' || #{writer} || '%'
+			</if>
+			<if test="title != null">
+				AND	B.BOARD_TITLE LIKE '%' || #{title} || '%'
+			</if>
+			<if test="content != null">
+				AND	B.BOARD_CONTENT LIKE '%' || #{content} || '%'		
+			</if>
+			AND B.STATUS='Y'
+		</trim>		 	
+		</where>	 
+		 -->
+	</select>
+	<!--  
+	<select id="selectBoardList" resultMap="boardResultMap">
+		SELECT B.BOARD_NO,
+		       M.USER_ID,
+		       B.BOARD_TITLE,
+		       B.BOARD_CONTENT,
+		       B.BOARD_READCOUNT,
+		       B.BOARD_CREATE_DATE,
+		       B.STATUS
+		FROM BOARD B
+		JOIN MEMBER M ON(B.BOARD_WRITER_NO = M.USER_NO)		
+		WHERE B.STATUS='Y'		
+			<if test="writer != null">
+				AND M.USER_ID LIKE '%' || #{writer} || '%'
+			</if>
+			<if test="title != null">
+				AND	B.BOARD_TITLE LIKE '%' || #{title} || '%'
+			</if>
+			<if test="content != null">
+				AND	B.BOARD_CONTENT LIKE '%' || #{content} || '%'		
+			</if>
+	</select>
+	-->
+	<!--  
+	<select id="selectBoardList" resultMap="boardResultMap">
+		SELECT B.BOARD_NO,
+		       M.USER_ID,
+		       B.BOARD_TITLE,
+		       B.BOARD_CONTENT,
+		       B.BOARD_READCOUNT,
+		       B.BOARD_CREATE_DATE,
+		       B.STATUS
+		FROM BOARD B
+		JOIN MEMBER M ON(B.BOARD_WRITER_NO = M.USER_NO)		
+		WHERE B.STATUS='Y'		
+		AND M.USER_ID LIKE '%' || #{writer} || '%'
+	</select>
+	-->
+	
+	
+	<select id="selectBoardCountByFilters" parameterType="map" resultType="_int">
+		SELECT COUNT(*)
+		FROM BOARD
+		WHERE STATUS='Y'
+		<if test="filters != null">	
+			AND BOARD_TYPE IN
+			<foreach collection="filters" item="filter"
+				index="i" open="(" separator="," close=")">
+				#{filter}
+			</foreach>		
+		</if>
+	</select>
+	
+	<select id="selectBoardListByFilters" parameterType="map" resultMap="boardResultMap">
+		<include refid="boardListSql"></include>
+		<if test="filters != null">
+			<!--  
+				AND B.BOARD_TYPE IN ('B2', 'B3')
+				
+				위 결과를 만들기 위해 foreach 태그를 사용한다.
+				collection : 배열, 리스트, 컬렉션..
+				item : 배열, 리스트의 각 요소들의 값이 들어가는 변수
+				index : 반복횟수(0부터 시작한다.)
+				open : 반복문 시작전에 출력할 문자
+				close : 반복문 끝나고 출력할 문자
+				separator : 반복할때마다 반복을 구분할 문자
+				
+				<if test="list != null">   parameterType="list"
+				<foreach collection="list" item="filter"    filters로 넘기지만 map형태로 받아서 list로 바꿔버린다.
+				     filters를 사용하고 싶으면 (Dao에서) map에 담아준다. 
+			-->
+			
+			AND B.BOARD_TYPE IN
+			<foreach collection="filters" item="filter"
+				index="i" open="(" separator="," close=")">
+				#{filter}
+			</foreach>		
+		</if>	
+		ORDER BY B.BOARD_NO DESC
+	</select>
+	
+	
+	
+	<!-- 
+		게시글 상세보기(댓글 포함) 1대 다(n) 관계
+		1. 쿼리문을 각각 만들어서 하나의 ResultMap에서 매핑하는 방법
+		2. 하나의 쿼리문을 만들어서 ResultMap에서 매핑하는 방법
+		
+		
+		sql DB에서   select * from board b
+		            join reply r on (b.board_no = r.board_no)
+		            where b.board_no = 21;
+	
+	<select id="selectBoardDetail" parameterType="_int" resultMap="boardDetailResultMap">
+		<include refid="boardListSql"></include>
+		AND B.BOARD_NO=#{boardNo}
+	</select>
+	
+	<select id="selectBoardReply" parameterType="_int" resultMap="boardReplyResultMap">
+		SELECT REPLY_NO, 
+               BOARD_NO, 
+               USER_ID,  (R_USER_ID? '2. 하나의 쿼리문을 만들어서 ResultMap에서 매핑하는 방법' 작업 이후 바꿔야 하나? 그래!)
+               REPLY_CONTENT, 
+               R.REPLY_CREATE_DATE, 
+               R.REPLY_MODIFY_DATE, 
+               R.STATUS 
+            FROM REPLY R 
+            JOIN MEMBER M ON(R.REPLY_WRITER_NO = M.USER_NO) 
+            WHERE R.STATUS='Y' AND BOARD_NO=#{boardNo}  
+            ORDER BY REPLY_CREATE_DATE DESC
+	</select>
+	 -->
+	 
+	 <select id="selectBoardDetail" parameterType="_int" resultMap="boardDetailResultMap">
+	 	SELECT B.BOARD_NO,
+             M.USER_ID AS B_USER_ID,
+             B.BOARD_TITLE,
+             B.BOARD_CONTENT,
+             B.BOARD_READCOUNT,
+             B.BOARD_CREATE_DATE,
+             B.STATUS AS B_STATUS,
+               R.REPLY_NO, 
+               R.BOARD_NO, 
+               M2.USER_ID AS R_USER_ID, 
+               R.REPLY_CONTENT, 
+               R.REPLY_CREATE_DATE, 
+               R.REPLY_MODIFY_DATE, 
+               R.STATUS AS R_STATUS
+        FROM BOARD B
+        JOIN MEMBER M ON(B.BOARD_WRITER_NO = M.USER_NO)
+        LEFT OUTER JOIN REPLY R ON(B.BOARD_NO = R.BOARD_NO)
+        LEFT OUTER JOIN MEMBER M2 ON(R.REPLY_WRITER_NO = M2.USER_NO)
+        WHERE B.STATUS='Y' AND R.STATUS='Y' AND B.BOARD_NO=#{boardNo}
+	 
+	 </select>
+</mapper>

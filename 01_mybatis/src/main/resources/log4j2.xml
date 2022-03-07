@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<Configuration status="INFO">
+	<!-- 로그의 출력 위치를 정한다. (콘솔, 파일로, OutpuStream, DB) -->
+	<Appenders>
+		<!-- 콘솔에 로그 메시지를 출력한다. target : SYSTEM_OUT, SYSTEM_ERR -->
+		<Console name="console" target="SYSTEM_OUT">
+			<!-- 로그의 출력 포멧을 지정한다. -->
+			<PatternLayout pattern="[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{3} %M - %msg - %n "/>
+		</Console>
+
+		<!-- 파일에 로그 메시지를 출력한다. fileName 경로 지정하면 자동으로 패키지, 파일 생성된다. -->
+		<File name="file" fileName="./logs/file/test.log">
+			<PatternLayout pattern="[%-5level] %d{yyyy-MM-dd HH:mm:ss.SSS} [%t] %c{3} %M - %msg - %n "/>
+		</File>
+	</Appenders>
+	<!-- 로깅이 일어나는 부분을 그룹화하는 역활을한다. -->
+	<Loggers>
+		<!-- 일반적인 로그 정책을 정의 <Root level="info" additivity="false"> -->
+		<Root level="debug" additivity="false">
+			<AppenderRef ref="console"/>
+			<AppenderRef ref="file"/>
+		</Root>
+
+		<!-- 
+			추가적으로 필요한 로그 정책을 정의한다. 패키지 범위를 설정할 수 있다 
+		<Logger name="com.kh.mybatis.board" level="info" additivity="false">
+			<AppenderRef ref="file"/>
+		</Logger>
+		-->
+	</Loggers>
+</Configuration> 

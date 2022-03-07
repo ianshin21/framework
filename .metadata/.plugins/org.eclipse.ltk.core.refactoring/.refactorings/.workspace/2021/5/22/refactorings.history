@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<session version="1.0">
+<refactoring comment="Delete resource &apos;01_mybatis/src/main/java/com/kh/mybatis/common/template/SqlSessionTemplate2.java&apos;" deleteContents="false" description="Delete resource &apos;01_mybatis/src/main/java/com/kh/mybatis/common/template/SqlSessionTemplate2.java&apos;" element1="/01_mybatis/src/main/java/com/kh/mybatis/common/template/SqlSessionTemplate2.java" flags="7" id="org.eclipse.ltk.core.refactoring.delete.resources" resources="1" stamp="1622015931827"/>
+</session>

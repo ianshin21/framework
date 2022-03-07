@@ -1,0 +1,11 @@
+Manifest-Version: 1.0
+Built-By: kim
+Build-Jdk: 14.0.2
+Implementation-Title: Spring Boot Blank Project (from https://github.com
+ /making/spring-boot-blank)
+Implementation-Version: 1.0-SNAPSHOT
+Implementation-Vendor-Id: com.kh
+Implementation-Vendor: Pivotal Software, Inc.
+Main-Class: com.kh.App
+Created-By: Maven Integration for Eclipse
+
